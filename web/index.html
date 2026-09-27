@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoClips AI Studio — De YouTube a Shorts & TikTok con RTX 4060</title>
+  <meta name="description" content="Generador inteligente de clips verticales virales (9:16) a partir de videos largos de YouTube. Acelerado por GPU NVIDIA RTX 4060, Faster-Whisper, Gemini 3.6 Flash y NVENC.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="dark-theme">
+  <!-- Fondo con degradados de luz ambiental -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <div class="app-layout">
+    <!-- Barra Superior / Navbar -->
+    <header class="app-header">
+      <div class="brand-container">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m15 10 4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14v-4z"></path>
+            <rect width="14" height="14" x="1" y="5" rx="3"></rect>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1 class="brand-name">AutoClips <span class="gradient-text">AI Studio</span></h1>
+          <p class="brand-tagline">De Video Largo a Shorts, TikTok & Kwai Virales</p>
+        </div>
+      </div>
+
+      <div class="system-status-pills">
+        <div class="status-pill gpu-pill" id="gpuStatusPill" title="Aceleración de hardware activa">
+          <span class="pulse-dot green"></span>
+          <span class="pill-label">GPU:</span>
+          <span class="pill-value" id="gpuNameText">NVIDIA RTX 4060 (CUDA / NVENC)</span>
+        </div>
+        <div class="status-pill ai-pill" id="aiStatusPill">
+          <span class="pulse-dot purple"></span>
+          <span class="pill-label">Cerebro IA:</span>
+          <span class="pill-value" id="aiModelText">Gemini 3.6 Flash</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="main-content">
+      <!-- Tarjeta de Entrada y Configuración -->
+      <section class="glass-card control-card">
+        <div class="card-header">
+          <div class="step-badge">1</div>
+          <div>
+            <h2 class="card-title">Enlace del Video de YouTube</h2>
+            <p class="card-subtitle">Pega el link de cualquier podcast, entrevista, tutorial o video (30 min a 2 horas)</p>
+          </div>
+        </div>
+
+        <div class="input-action-group">
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <input 
+              type="text" 
+              id="youtubeUrlInput" 
+              class="primary-input" 
+              placeholder="https://www.youtube.com/watch?v=..." 
+              autocomplete="off"
+            >
+            <button id="clearInputBtn" class="clear-input-btn" title="Borrar">✕</button>
+          </div>
+          <button id="inspectVideoBtn" class="secondary-btn" title="Cargar vista previa">
+            <span>Inspeccionar</span>
+          </button>
+        </div>
+
+        <!-- Vista previa rápida del video detectado -->
+        <div id="videoPreviewBox" class="video-preview-box hidden">
+          <div class="preview-thumbnail-wrap">
+            <img id="previewThumbnail" src="" alt="Miniatura">
+            <span id="previewDuration" class="preview-duration-badge">00:00</span>
+          </div>
+          <div class="preview-info">
+            <h3 id="previewTitle" class="preview-title">Título del Video</h3>
+            <p id="previewChannel" class="preview-channel">Canal del Creador</p>
+            <span class="subs-badge" id="previewSubsBadge">Verificando subtítulos...</span>
+          </div>
+        </div>
+
+        <!-- Opciones del Estudio de Generación -->
+        <div class="settings-grid">
+          <div class="setting-item">
+            <label for="numClipsSelect" class="setting-label">Cantidad de Clips</label>
+            <div class="select-wrapper">
+              <select id="numClipsSelect" class="styled-select">
+                <option value="2">2 Clips Virales</option>
+                <option value="3" selected>3 Clips Virales (Recomendado)</option>
+                <option value="5">5 Clips Virales</option>
+                <option value="8">8 Clips Virales</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <label for="durationSelect" class="setting-label">Rango de Duración</label>
+            <div class="select-wrapper">
+              <select id="durationSelect" class="styled-select">
+                <option value="30-60" selected>30 a 60 seg (TikTok / Shorts)</option>
+                <option value="45-90">45 a 90 seg (Kwai / Reels)</option>
+                <option value="20-40">20 a 40 seg (Píldoras Rápidas)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <label for="framingSelect" class="setting-label">Encuadre 9:16 Vertical</label>
+            <div class="select-wrapper">
+              <select id="framingSelect" class="styled-select">
+                <option value="smart_face" selected>Seguimiento de Rostro (OpenCV)</option>
+                <option value="blurred_bg">Fondo Desenfocado (Podcast / Entrevistas)</option>
+                <option value="center_crop">Recorte Centrado 9:16</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <label for="subtitlesSelect" class="setting-label">Subtítulos Animados</label>
+            <div class="select-wrapper">
+              <select id="subtitlesSelect" class="styled-select">
+                <option value="karaoke_yellow" selected>Karaoke Amarillo Neón (Hormozi)</option>
+                <option value="karaoke_green">Karaoke Verde Neón</option>
+                <option value="karaoke_cyan">Karaoke Cyan Eléctrico</option>
+                <option value="none">Sin Subtítulos Quemados</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón de Acción Principal -->
+        <div class="action-footer">
+          <button id="startGenerationBtn" class="cta-primary-btn">
+            <div class="btn-shimmer"></div>
+            <svg class="cta-icon" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span class="cta-text">Generar Clips Virales con RTX 4060</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Monitor del Pipeline en Tiempo Real -->
+      <section id="progressSection" class="glass-card progress-card hidden">
+        <div class="card-header">
+          <div class="step-badge active">2</div>
+          <div>
+            <h2 class="card-title">Procesamiento Agéntico en Curso</h2>
+            <p id="currentStageMessage" class="card-subtitle">Iniciando orquestador...</p>
+          </div>
+          <div class="percent-counter" id="progressPercent">0%</div>
+        </div>
+
+        <div class="progress-bar-track">
+          <div id="progressBarFill" class="progress-bar-fill" style="width: 0%"></div>
+        </div>
+
+        <!-- Pasos visuales del Pipeline -->
+        <div class="pipeline-stepper">
+          <div class="step-node" id="step-info">
+            <div class="node-circle">1</div>
+            <span class="node-name">Metadatos</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-node" id="step-transcribe">
+            <div class="node-circle">2</div>
+            <span class="node-name">Whisper GPU</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-node" id="step-analyze">
+            <div class="node-circle">3</div>
+            <span class="node-name">Gemini Viral</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-node" id="step-render">
+            <div class="node-circle">4</div>
+            <span class="node-name">Render NVENC</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-node" id="step-complete">
+            <div class="node-circle">5</div>
+            <span class="node-name">Completado</span>
+          </div>
+        </div>
+
+        <!-- Consola de logs en vivo -->
+        <div class="live-console">
+          <div class="console-header">
+            <span>Terminal de Ejecución</span>
+            <span class="live-badge">EN VIVO</span>
+          </div>
+          <div id="consoleLogFeed" class="console-feed">
+            <div class="log-line info">[SISTEMA] Conexión SSE lista. Esperando orden de trabajo...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Galería de Resultados -->
+      <section id="resultsSection" class="glass-card results-card hidden">
+        <div class="results-header">
+          <div>
+            <h2 class="card-title">Clips Verticales Generados</h2>
+            <p id="resultsSubtitle" class="card-subtitle">3 clips optimizados para retención en 9:16</p>
+          </div>
+          <div class="results-actions">
+            <a id="downloadZipBtn" href="#" class="secondary-btn download-all-btn" download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Descargar Paquete Completo (.ZIP)</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Cuadrícula de Clips -->
+        <div id="clipsGrid" class="clips-grid">
+          <!-- Tarjetas renderizadas dinámicamente por app.js -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal de Reproducción de Clip en Vivo -->
+    <div id="videoModal" class="modal-backdrop hidden">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="modalClipTitle" class="modal-title">Previsualización de Clip</h3>
+          <button id="closeModalBtn" class="modal-close-btn">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="player-container">
+            <video id="modalVideoPlayer" controls autoplay playsinline></video>
+          </div>
+          <div class="modal-details">
+            <div class="modal-meta-row">
+              <span id="modalViralityBadge" class="score-badge">95/100 Viral</span>
+              <span id="modalDurationBadge" class="duration-badge">00:45</span>
+            </div>
+            <div class="copy-box">
+              <label>Gancho & Hashtags recomendados:</label>
+              <textarea id="modalCopyText" readonly></textarea>
+              <button id="modalCopyBtn" class="copy-action-btn">Copiar Texto & Hashtags</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer class="app-footer">
+      <p>AutoClips AI Studio • Fábrica de Software Autónoma • Optimizado para NVIDIA GeForce RTX 4060 & Google Gemini</p>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
